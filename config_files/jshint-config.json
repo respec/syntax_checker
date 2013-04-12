@@ -1,0 +1,7 @@
+{
+    "smarttabs" : true,
+//    "eqnull" : true,
+    "eqeqeq" : false,
+    "evil" : true,
+    "sub": true
+}

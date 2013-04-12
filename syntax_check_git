@@ -1,0 +1,96 @@
+#!/bin/bash 
+
+COLUMNS=$(tput cols)
+WIDTH=$[$COLUMNS - 16]
+if [ $WIDTH -gt 100 ]; then
+    WIDTH=100
+fi
+FORMAT="%-"$WIDTH"s"
+
+git status >/dev/null 2>&1 
+
+ONLY_SHOW_FILES_WHERE=100
+if [ "$1" == "-f" ]; then
+    ONLY_SHOW_FILES_WHERE=1
+fi
+
+if [ "$#" -gt "1" ]; then
+
+	echo ""
+	echo "syntax_check_git -- Check that all modified files in a git repository are syntactically correct"
+	echo "Currently checks php,xml,js,json,css,rb and sh files"
+	echo ""
+	echo "USAGE: Run syntax_check_git from a directory within a git repository"
+	echo ""
+	exit
+fi
+
+PATH=$PATH:/usr/local/bin/node-v0.8.18-linux-x64/bin
+
+source syntax_check_lib
+
+ALLOK='yes'
+FILESCHECKED=0
+
+for FULLFILE in `git status | grep -E "modified|new" | sed 's/.*: *//'`;do
+    FILESCHECKED=$((FILESCHECKED+1))
+
+    if [ ${#FULLFILE} -gt $WIDTH ]; then
+        CUTARGS=$[${#FULLFILE} - $[$WIDTH + 3]]-${#FULLFILE}
+        SHORTNAME="..."$(echo $FULLFILE | cut -c$CUTARGS)" "
+    else
+        SHORTNAME=$FULLFILE" "
+    fi
+
+
+
+    # Check the file
+    CHECK_RES=$(checkfile $FULLFILE)
+    EXIT_CODE=$?
+
+    if [ $ONLY_SHOW_FILES_WHERE -lt 100 ]; then
+        if [ $EXIT_CODE -eq $ONLY_SHOW_FILES_WHERE ];then 
+            echo $FULLFILE
+        fi
+        continue
+    fi
+
+    # Print the filename, with right padding
+    printf $FORMAT "$SHORTNAME"
+
+    # Print a colored status
+
+    case "$EXIT_CODE" in
+        0)
+            echo -e "\033[32;5;148m[OK]\033[39m"
+            ;;
+        1)
+            ALLOK='no'
+            echo -e "\033[31;5;148m[FAIL]\033[39m"
+            ;;
+        2)
+            echo -e "\033[33;5;148m[UNCHECKED]\033[39m"
+            ;;
+        3)
+            echo -e "\033[33;5;148m[UNCHECKED]\033[39m"
+            ;;
+        *)
+            ALLOK='no'
+            echo -e "\033[31;5;148m[FAIL]\033[39m"
+            CHECK_RES="Unexpected exit code: '$EXIT_CODE'"
+    esac
+
+    # Print any extra messages
+    if [ "$CHECK_RES" != "" ];then
+        echo -en "\t\t"
+        echo "$CHECK_RES"
+        echo ""
+    fi
+
+done
+
+# If nothing was checked, print that too
+if [ "$FILESCHECKED" -eq "0" ];then
+    printf $FORMAT "No files checked"
+    echo -e "\033[32;5;148m[OK]\033[39m"
+fi

@@ -1,0 +1,187 @@
+#!/bin/bash
+
+# Function to check file syntax. Currently supports: 
+#    * css
+#    * html
+#    * js/json 
+#    * php
+#    * rb
+#    * sh
+#    * xml
+#
+# It also supports checking that image files (gif,jpg,png,svg) are valid through imagemagick
+#
+# Checkfile expects a path to a file
+# Returns:
+# 0 on success
+# 1 on syntax check error 
+# 2 for unsupported files
+# 3 for files which are supported, but which the syntx checker is not installed
+
+# Sets variable CHECK_RES to the output of the syntax check command
+
+# JavaScript's hint takes an optional config file from /etc/syntax_checker/jshint-config.json or ~/.syntax_checker/jshint-config.json
+# and a custom reporter file from /etc/syntax_checker/jshint-custom-reporter.js or ~/.syntax_checker/jshint-custom-reporter.json
+
+# HTML tidy takes an optional config file from /etc/syntax_checker/tidy.conf or ~/.syntax_checker/tidy.conf
+
+# Note: Echo CHECK_RES with surrounding quotes to preserve newlines
+# eg. echo "$CHECK_RES"
+
+function checkfile {
+
+FILEPATH=$1
+EXTENSION=$(echo "${FILEPATH##*.}" | tr '[A-Z]' '[a-z]')
+CHECK_RES=""
+RET_VAL=0
+
+case "$EXTENSION" in
+    css)
+        # https://github.com/stubbornella/csslint
+        # Ignore warnings
+        which csslint 2>&1 >/dev/null
+        if [ "$?" -ne "0" ]; then
+            CHECK_RES="csslint not found in path"
+            RET_VAL=3
+        else
+            CHECK_RES=$(csslint --quiet --format=compact $FILEPATH 2>&1 | grep -v Warning)
+            if [ "$CHECK_RES" != "" ] ; then
+                RET_VAL=1
+            fi
+        fi;;
+    gif|jpg|png|svg)
+        which identify 2>&1 >/dev/null
+        if [ "$?" -ne 0 ]; then
+            CHECK_RES="identify (imagemagick) not found in path"
+            RET_VAL=3
+        else
+            CHECK_RES=$(identify $FILEPATH 2>&1)
+            if [ "$?" -ne "0" ]; then 
+                RET_VAL=1
+            else
+                CHECK_RES=""
+            fi
+        fi;;
+    html)
+        which tidy 2>&1 >/dev/null
+        if [ "$?" -ne "0" ]; then
+            CHECK_RES="tidy not found in path"
+            RET_VAL=3
+        else
+
+            if [ -f ~/.syntax_checker/tidy.conf ]; then
+                CONF="-config "~/.syntax_checker/tidy.conf
+            elif [ -f /etc/syntax_checker/tidy.conf ]; then
+                CONF="-config "/etc/syntax_checker/tidy.conf
+            else
+                CONF=""
+            fi
+
+            CHECK_RES=$(tidy -e -q $CONF $FILEPATH 2>&1)
+            exitval=$?
+            if [ "$exitval" -ne "0" ]; then
+                RET_VAL=1
+            fi
+        fi
+        ;;
+    js|json)
+        # http://www.jshint.com/
+        which hint 2>&1 >/dev/null
+        if [ "$?" -ne "0" ]; then
+            CHECK_RES="hint not found in path"
+            RET_VAL=3
+        else
+
+            if [ -f ~/.syntax_checker/jshint-config.json ]; then
+                HINTFILE="--config "~/.syntax_checker/jshint-config.json
+            elif [ -f /etc/syntax_checker/jshint-config.json ]; then
+                HINTFILE="--config "/etc/syntax_checker/jshint-config.json
+            else
+                HINTFILE=""
+            fi
+
+            if [ -f ~/.syntax_checker/jshint-custom-reporter.js ]; then
+                REPORTER="--reporter "~/.syntax_checker/jshint-custom-reporter.js
+            elif [ -f /etc/syntax_checker/jshint-custom-reporter.js ]; then
+                REPORTER="--reporter "/etc/syntax_checker/jshint-custom-reporter.js
+            else
+                REPORTER=""
+            fi
+
+            CHECK_RES=$(hint $HINTFILE $REPORTER $FILEPATH 2>&1)
+            if [ "$CHECK_RES" != "" ]; then
+                RET_VAL=1
+            fi
+        fi;;
+    php)
+        which php 2>&1 >/dev/null
+        if [ "$?" -ne "0" ]; then
+            CHECK_RES="php program not found in path"
+            RET_VAL=3
+        else
+            CHECK_RES=$(php -l $FILEPATH 2>&1 | grep -v 'No syntax errors detected')
+            if [ "$CHECK_RES" != "" ] ; then
+                RET_VAL=1
+            fi
+        fi;; 
+    rb)
+        which ruby 2>&1 >/dev/null
+        if [ "$?" -ne "0" ]; then
+            CHECK_RES="ruby not found in path"
+            RET_VAL=3
+        else
+            CHECK_RES=$(ruby -c $FILEPATH 2>&1)
+            exitval=$?
+            if [ "$exitval" -ne "0" ]; then
+                RET_VAL=1
+            else
+                CHECK_RES=""
+            fi
+        fi;;
+    sh)
+        which bash 2>&1 >/dev/null
+        if [ "$?" -ne "0" ]; then
+            CHECK_RES="bash not found in path"
+            RET_VAL=3
+        else
+            CHECK_RES=$(bash -n $FILEPATH 2>&1)
+            exitval=$?
+            if [ "$exitval" -ne "0" ]; then
+                RET_VAL=1
+            fi
+        fi;;
+
+    xml)
+        # http://xmlsoft.org/xmllint.html
+        which xmllint 2>&1 >/dev/null
+        if [ "$?" -ne "0" ]; then
+            CHECK_RES="xmllint not found in path"
+            RET_VAL=3
+        else
+            CHECK_RES=$(xmllint $FILEPATH >/dev/null 2>&1)
+            if [ "$?" -ne "0" ]; then
+                CHECK_RES=$(xmllint $FILEPATH 2>&1 | grep -v compiled)
+                RET_VAL=1
+            fi
+        fi;;
+    sql)
+        # https://github.com/markdrago/pgsanity
+        # Specific to postgres, but others may benefit too
+        which pgsanity 2>&1 >/dev/null
+        if [ "$?" -ne 0 ]; then
+            CHECK_RES="pgsanity not found in path"
+            RET_VAL=3
+        else
+            CHECK_RES=$(pgsanity $FILEPATH)
+            if [ "$?" -ne "0" ]; then
+                RET_VAL=1
+            fi
+        fi;;
+    *)
+        CHECK_RES="$EXTENSION not found in syntax check list"
+        RET_VAL=2
+esac
+
+echo "$CHECK_RES"
+return $RET_VAL
+}

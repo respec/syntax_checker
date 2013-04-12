@@ -1,0 +1,27 @@
+#!/bin/bash
+
+DST=/usr/local/bin
+
+mkdir -p $DST
+
+cp syntax_check $DST
+cp syntax_check_git $DST
+cp syntax_check_lib $DST
+
+cp -r config_files /etc/syntax_checker 
+
+echo "syntax_checker depends on several 3rd party programs to do syntax checking."
+echo "You may need to install those dependencies. On Debian based systems you should"
+echo "be able to run install_deps.sh as an administrator"
+echo ""
+echo "To use within git, add these lines to your ~/.gitconfig
+
+[alias]
+ok = !syntax_check_git
+bad = !syntax_check_git -f  
+"
+echo ""
+echo "To check an individual file, run :
+
+syntax_check \$filename"
+echo ""

@@ -68,6 +68,7 @@ fi
 which npm 2>&1 >/dev/null
 if [ "$?" -eq "0" ]; then
     npm install -g jshint
+    npm install -g csslint 
 else
     echo "npm not found!"
     echo "Can't install:"

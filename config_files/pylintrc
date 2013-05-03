@@ -1,0 +1,5 @@
+# ~/.pylintrc takes presidence
+[MESSAGES CONTROL]
+disable=C0111
+[REPORTS]
+reports=no

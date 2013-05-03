@@ -35,6 +35,23 @@ EXTENSION=$(echo "${FILEPATH##*.}" | tr '[A-Z]' '[a-z]')
 CHECK_RES=""
 RET_VAL=0
 
+if [ "$2" != "" ]; then
+    EXTENSION=$2
+fi
+
+
+if [ -f ~/.syntax_checker/PATH ]; then
+    paths=$(cat ~/.syntax_checker/PATH | grep -v '#')
+    for ((i=${#paths[@]}-1; i>=0; i--)); do
+        export PATH="${paths[$i]}":$PATH
+    done
+elif [ -f /etc/syntax_checker/PATH ]; then
+    paths=$(cat /etc/syntax_checker/PATH | grep -v '#')
+    for ((i=${#paths[@]}-1; i>=0; i--)); do
+        export PATH="${paths[$i]}":$PATH
+    done
+fi
+
 case "$EXTENSION" in
     css)
         # https://github.com/stubbornella/csslint
@@ -62,7 +79,7 @@ case "$EXTENSION" in
                 CHECK_RES=""
             fi
         fi;;
-    html)
+    html|htm)
         which tidy 2>&1 >/dev/null
         if [ "$?" -ne "0" ]; then
             CHECK_RES="tidy not found in path"
@@ -124,6 +141,55 @@ case "$EXTENSION" in
                 RET_VAL=1
             fi
         fi;; 
+    py)
+
+        which pylint >&1 >/dev/null
+        if [ "$?" -eq "0" ]; then
+
+
+
+            if [ -f ~/.pylintrc ]; then
+                RCFILE="--rcfile "~/.pylintrc
+            elif [ -f ~/.syntax_checker/pylintrc ]; then 
+                RCFILE="--rcfile "~/.syntax_checker/pylintrc 
+            elif [ -f /etc/syntax_checker/pylintrc ]; then 
+                RCFILE="--rcfile "/etc/syntax_checker/pylintrc 
+            else
+                RCFILE=""
+            fi
+
+            CHECK_RES=$(pylint -r n $RCFILE $FILEPATH)
+            exitval=$?
+            if [ "$exitval" -ne "0" ]; then
+                CHECK_RES=$(pylint -r n $RCFILE $FILEPATH | grep [EWC])
+                RET_VAL=1
+            else
+                CHECK_RES=""
+            fi
+        else
+            which python 2>&1 >/dev/null
+            if [ "$?" -ne "0" ]; then
+                CHECK_RES="python program not found in path"
+                RET_VAL=3
+            else
+                if [ !-f $(basename $FILEPATH).pyc ]; then
+                    REMOVE_PYC = 1;
+                fi
+
+                CHECK_RES=$(python -m py_compile $FILEPATH)
+                exitval=$?
+                if [ "$exitval" -ne "0" ]; then
+                    RET_VAL=1
+                else
+                    CHECK_RES=""
+                fi
+
+                if [ "$REMOVE_PYC" -eq "1" ]; then
+                    rm $(basename $FILEPATH).pyc
+                fi
+            fi
+        fi
+        ;;
     rb)
         which ruby 2>&1 >/dev/null
         if [ "$?" -ne "0" ]; then
@@ -182,6 +248,6 @@ case "$EXTENSION" in
         RET_VAL=2
 esac
 
-echo "$CHECK_RES"
+echo -n "$CHECK_RES"
 return $RET_VAL
 }

@@ -1,4 +1,6 @@
 #!/bin/bash
-PATH=$PATH:/usr/local/bin/node-v0.8.18-linux-x64/bin
-source syntax_check_lib
-checkfile $1
+source $(dirname $0)/syntax_check_lib
+checkfile $1 $2
+if [ "$?" -ne "0" ]; then
+    echo ""; # Add a new line
+fi

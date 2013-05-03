@@ -6,7 +6,7 @@ cd deps
 # apt-get sourced programs
 which apt-get 2>&1 >/dev/null
 if [ "$?" -eq "0" ]; then
-    apt-get install git imagemagick tidy php5-cli ruby bash libxml2-utils wget
+    apt-get install git imagemagick tidy php5-cli ruby bash libxml2-utils wget pylint
 else
     echo "apt-get not found. Please install the following programs (you may already have them):"
     echo -e "\tgit"
@@ -17,6 +17,7 @@ else
     echo -e "\truby"
     echo -e "\tbash"
     echo -e "\twget"
+    echo -e "\tpylint"
     echo -e "\tlibxml2-utils (xmllint)"
 fi
 

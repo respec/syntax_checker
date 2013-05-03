@@ -1,0 +1,3 @@
+# Any lines not containing a # sign will be prefixed to the path
+# eg: 
+# /usr/local/bin/node-v0.8.18-linux-x64/bin

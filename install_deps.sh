@@ -24,7 +24,7 @@ fi
 which wget 2>&1 >/dev/null
 if [ "$?" -eq "0" ]; then
     sf=$(uname -a | grep amd64; echo $?)
-    if [ "$?" -eq "0" ]; then
+    if [ "$sf" -eq "0" ]; then
         wget -O node.tgz -c http://nodejs.org/dist/v0.10.4/node-v0.10.4-linux-x64.tar.gz
     else
         wget -O node.tgz -c http://nodejs.org/dist/v0.10.4/node-v0.10.4-linux-x86.tar.gz

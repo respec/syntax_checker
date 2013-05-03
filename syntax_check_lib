@@ -103,12 +103,15 @@ case "$EXTENSION" in
         ;;
     js|json)
         # http://www.jshint.com/
-        which hint 2>&1 >/dev/null
-        if [ "$?" -ne "0" ]; then
+        HINTBIN=$(which jshint);
+        if [ "$HINTBIN" == "" ]; then
+            HINTBIN=$(which hint);
+        fi
+
+        if [ "$HINTBIN" = "" ]; then
             CHECK_RES="hint not found in path"
             RET_VAL=3
         else
-
             if [ -f ~/.syntax_checker/jshint-config.json ]; then
                 HINTFILE="--config "~/.syntax_checker/jshint-config.json
             elif [ -f /etc/syntax_checker/jshint-config.json ]; then
@@ -125,7 +128,7 @@ case "$EXTENSION" in
                 REPORTER=""
             fi
 
-            CHECK_RES=$(hint $HINTFILE $REPORTER $FILEPATH 2>&1)
+            CHECK_RES=$($HINTBIN $HINTFILE $REPORTER $FILEPATH 2>&1)
             if [ "$CHECK_RES" != "" ]; then
                 RET_VAL=1
             fi

@@ -35,10 +35,13 @@ EXTENSION=$(echo "${FILEPATH##*.}" | tr '[A-Z]' '[a-z]')
 CHECK_RES=""
 RET_VAL=0
 
+if [ -d $FILEPATH ] ; then
+    EXTENSION='DIRECTORY'
+fi
+
 if [ "$2" != "" ]; then
     EXTENSION=$2
 fi
-
 
 if [ -f ~/.syntax_checker/PATH ]; then
     paths=$(cat ~/.syntax_checker/PATH | grep -v '#')
@@ -66,6 +69,11 @@ case "$EXTENSION" in
                 RET_VAL=1
             fi
         fi;;
+    DIRECTORY)
+        # Submodules in git show up as directories
+        CHECK_RES=''
+        RET_VAL=0
+	;;
     gif|jpg|png|svg)
         which identify 2>&1 >/dev/null
         if [ "$?" -ne 0 ]; then

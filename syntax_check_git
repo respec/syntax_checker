@@ -32,7 +32,7 @@ source syntax_check_lib
 ALLOK='yes'
 FILESCHECKED=0
 
-for FULLFILE in `git status | grep -E "modified|new" | sed 's/.*: *//'`;do
+for FULLFILE in `git status | grep -E "#\s*(modified|new)" | sed 's/.*: *//' | sed 's/(untracked content)//'`;do
     FILESCHECKED=$((FILESCHECKED+1))
 
     if [ ${#FULLFILE} -gt $WIDTH ]; then

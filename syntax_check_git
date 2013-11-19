@@ -62,21 +62,26 @@ for FULLFILE in $(git status | grep -E "modified|new" | grep -v '^#' | sed 's/.*
 
     case "$EXIT_CODE" in
         0)
-            echo -e "\033[32;5;148m[OK]\033[39m"
+            echo -e "\033[32;1;148m[OK]\033[39m"
+            echo -n -e "\033[0m"
             ;;
         1)
             ALLOK='no'
-            echo -e "\033[31;5;148m[FAIL]\033[39m"
+            echo -e "\033[31;1;148m[FAIL]\033[39m"
+            echo -n -e "\033[0m"
             ;;
         2)
-            echo -e "\033[33;5;148m[UNCHECKED]\033[39m"
+            echo -e "\033[33;1;148m[UNCHECKED]\033[39m"
+            echo -n -e "\033[0m"
             ;;
         3)
-            echo -e "\033[33;5;148m[UNCHECKED]\033[39m"
+            echo -e "\033[33;1;148m[UNCHECKED]\033[39m"
+            echo -n -e "\033[0m"
             ;;
         *)
             ALLOK='no'
-            echo -e "\033[31;5;148m[FAIL]\033[39m"
+            echo -e "\033[31;1;148m[FAIL]\033[39m"
+            echo -n -e "\033[0m"
             CHECK_RES="Unexpected exit code: '$EXIT_CODE'"
     esac
 
@@ -92,5 +97,6 @@ done
 # If nothing was checked, print that too
 if [ "$FILESCHECKED" -eq "0" ];then
     printf $FORMAT "No files checked"
-    echo -e "\033[32;5;148m[OK]\033[39m"
+    echo -e "\033[32;1;148m[OK]\033[39m"
+    echo -n -e "\033[0m"
 fi

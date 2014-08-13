@@ -227,7 +227,6 @@ case "$EXTENSION" in
                 RET_VAL=1
             fi
         fi;;
-
     xml)
         # http://xmlsoft.org/xmllint.html
         which xmllint 2>&1 >/dev/null
@@ -253,6 +252,12 @@ case "$EXTENSION" in
             if [ "$?" -ne "0" ]; then
                 RET_VAL=1
             fi
+        fi;;
+    txt)
+        file --mime-type $FILEPATH | grep 'text'
+        if [ "$?" -ne "0" ]; then
+            CHECK_RES=$(file --mime-type $FILEPATH | grep -v 'text')
+            RET_VAL=1
         fi;;
     *)
         CHECK_RES="$EXTENSION not found in syntax check list"

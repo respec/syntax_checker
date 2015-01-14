@@ -183,8 +183,10 @@ case "$EXTENSION" in
                 CHECK_RES="python program not found in path"
                 RET_VAL=3
             else
-                if [ !-f $(basename $FILEPATH).pyc ]; then
-                    REMOVE_PYC = 1;
+                if [ -f $(basename $FILEPATH).pyc ]; then
+                    REMOVE_PYC=0;
+                else
+                    REMOVE_PYC=1;
                 fi
 
                 CHECK_RES=$(python -m py_compile $FILEPATH)
@@ -195,8 +197,11 @@ case "$EXTENSION" in
                     CHECK_RES=""
                 fi
 
-                if [ "$REMOVE_PYC" -eq "1" ]; then
-                    rm $(basename $FILEPATH).pyc
+                if [ $REMOVE_PYC -eq 1 ]; then
+                    RMME=$(basename $FILEPATH).pyc
+                    if [ -f $RMME ]; then
+                        rm $RMME
+                    fi
                 fi
             fi
         fi

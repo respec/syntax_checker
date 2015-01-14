@@ -189,7 +189,7 @@ case "$EXTENSION" in
                     REMOVE_PYC=1;
                 fi
 
-                CHECK_RES=$(python -m py_compile $FILEPATH)
+                CHECK_RES=$(python -m py_compile $FILEPATH 2>&1)
                 exitval=$?
                 if [ "$exitval" -ne "0" ]; then
                     RET_VAL=1

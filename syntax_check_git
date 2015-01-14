@@ -29,6 +29,18 @@ PATH=$PATH:/usr/local/bin/node-v0.8.18-linux-x64/bin
 
 source syntax_check_lib
 
+
+# Defaults
+MAX_ERROR_LINES=10000
+
+if [ -f /etc/syntax_checker/syntax_checker ]; then
+    source /etc/syntax_checker/syntax_checker
+fi
+if [ -f ~/.syntax_checker/syntax_checker ]; then
+    source ~/.syntax_checker/syntax_checker 
+fi
+
+
 ALLOK='yes'
 FILESCHECKED=0
 
@@ -87,8 +99,14 @@ for FULLFILE in $(git status | grep -E "modified|new" | grep -v '^#' | sed 's/.*
 
     # Print any extra messages
     if [ "$CHECK_RES" != "" ];then
+
+        LINESFOUND=$(echo "$CHECK_RES" | wc -l)
         echo -en "\t\t"
-        echo "$CHECK_RES"
+        echo "$CHECK_RES" | head -$MAX_ERROR_LINES
+
+        if [ $LINESFOUND -gt $MAX_ERROR_LINES ]; then
+            echo "  ...and $(($LINESFOUND - $MAX_ERROR_LINES)) more lines..."
+        fi
         echo ""
     fi
 
